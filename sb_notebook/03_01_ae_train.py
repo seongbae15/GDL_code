@@ -39,6 +39,19 @@ def main():
     else:
         AE.load_weights(RUN_FOLDER.joinpath("weights", "weights.h5"))
 
+    LEARNING_RATE = 0.0005
+    BATCH_SIZE = 32
+    INITIAL_EPOCH = 0
+
+    AE.compile(LEARNING_RATE)
+    AE.train(
+        x_train[:1000],
+        batch_size=BATCH_SIZE,
+        epochs=10,
+        run_folder=RUN_FOLDER,
+        initial_epoch=INITIAL_EPOCH,
+    )
+
 
 if __name__ == "__main__":
     main()
