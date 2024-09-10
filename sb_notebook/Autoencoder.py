@@ -10,10 +10,15 @@ from keras.layers import (
     Conv2DTranspose,
     Activation,
 )
-from keras import backend as K
+from tensorflow.keras import backend as K
 from keras.models import Model
 from keras.optimizers import Adam
+from keras.utils import plot_model
+
 import numpy as np
+
+from pathlib import Path
+import pickle
 
 
 class Autoencoder:
@@ -53,8 +58,8 @@ class Autoencoder:
         for i in range(self.n_layers_encoder):
             conv_layers = Conv2D(
                 filters=self.encoder_conv_filters[i],
-                kernel_size=self.encoder_conv_kernel_size,
-                strides=self.encoder_conv_strides,
+                kernel_size=self.encoder_conv_kernel_size[i],
+                strides=self.encoder_conv_strides[i],
                 padding="same",
                 name=f"encoder_conv_{i}",
             )
@@ -69,7 +74,7 @@ class Autoencoder:
         encoder_output = Dense(self.z_dim, name="encoder_output")(x)
         self.encoder = Model(encoder_input, encoder_output)
 
-        decoder_input = Input(shape=(self.z_dim), name="decoder_input")
+        decoder_input = Input(shape=(self.z_dim,), name="decoder_input")
         x = Dense(np.prod(shape_before_flattening))(decoder_input)
         x = Reshape(shape_before_flattening)(x)
 
@@ -107,3 +112,52 @@ class Autoencoder:
             return K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
 
         self.model.compile(optimizer=optimizer, loss=r_loss)
+
+    def plot_model(self, run_folder: Path):
+        plot_model(
+            self.model,
+            to_file=run_folder.joinpath("viz", "model.png"),
+            show_shapes=True,
+            show_layer_names=True,
+        )
+        plot_model(
+            self.encoder,
+            to_file=run_folder.joinpath("viz", "encoder.png"),
+            show_shapes=True,
+            show_layer_names=True,
+        )
+        plot_model(
+            self.decoder,
+            to_file=run_folder.joinpath("viz", "decoder.png"),
+            show_shapes=True,
+            show_layer_names=True,
+        )
+
+    def save(self, folder: Path):
+        if not folder.exists():
+            folder.mkdir(parents=True)
+            Path.mkdir(folder.joinpath("viz"))
+            Path.mkdir(folder.joinpath("images"))
+            Path.mkdir(folder.joinpath("weights"))
+
+        with open(folder.joinpath("params.pkl"), "wb") as f:
+            pickle.dump(
+                [
+                    self.input_dim,
+                    self.encoder_conv_filters,
+                    self.encoder_conv_kernel_size,
+                    self.encoder_conv_strides,
+                    self.decoder_conv_t_filters,
+                    self.decoder_conv_t_kernel_size,
+                    self.decoder_conv_t_strides,
+                    self.z_dim,
+                    self.use_batch_norm,
+                    self.use_dropout,
+                ],
+                f,
+            )
+
+        self.plot_model(folder)
+
+    def load_weights(self, filepath: Path):
+        self.model.load_weights(filepath)
