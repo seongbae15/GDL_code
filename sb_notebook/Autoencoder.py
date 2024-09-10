@@ -12,6 +12,7 @@ from keras.layers import (
 )
 from keras import backend as K
 from keras.models import Model
+from keras.optimizers import Adam
 import numpy as np
 
 
@@ -97,3 +98,12 @@ class Autoencoder:
         model_input = encoder_input
         model_output = decoder_output
         self.model = Model(model_input, model_output)
+
+    def compile(self, learning_rate):
+        self.learing_rate = learning_rate
+        optimizer = Adam(lr=learning_rate)
+
+        def r_loss(y_true, y_pred):
+            return K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
+
+        self.model.compile(optimizer=optimizer, loss=r_loss)
