@@ -266,7 +266,7 @@ class VariationalAutoencoder:
             checkpoint_filepath, save_weights_only=True, verbose=1
         )
         checkpoint2 = ModelCheckpoint(
-            os.path.join(run_folder, "weights/vae,weights.h5"),
+            os.path.join(run_folder, "weights/vae_ckpt.weights.h5"),
             save_weights_only=True,
             verbose=1,
         )
